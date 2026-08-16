@@ -68,6 +68,21 @@ describe('TavernStore', () => {
     expect((await store.getCharacter('Seraphina'))?.card.data.name).toBe('Seraphina')
   }))
 
+  it('角色：按面板 IR 保存并保留原始 PNG 容器', withStore(async (store) => {
+    const png = new Uint8Array(readFileSync(`${fixturesDir}/Seraphina.png`))
+    const imported = await store.importCharacter(png)
+    const saved = await store.updateCharacter('Seraphina', {
+      spec: imported.card.spec,
+      specVersion: imported.card.specVersion,
+      data: { ...imported.card.data, description: 'Edited from panel' },
+    })
+    expect(saved.kind).toBe('png')
+    expect(saved.card.data.description).toBe('Edited from panel')
+    const exported = await store.exportCharacter('Seraphina')
+    expect(exported.length).toBeGreaterThan(100_000)
+    expect(decodeCharacterCard(exported).data.description).toBe('Edited from panel')
+  }))
+
   it('角色：CHARX 原样导入并保留 embeded assets', withStore(async (store) => {
     const card = decodeCharacterCard({
       ...sampleCard,
@@ -99,6 +114,15 @@ describe('TavernStore', () => {
     expect(await store.listWorlds()).toEqual(['Eldoria'])
     await store.deleteWorld('Eldoria')
     expect(await store.listWorlds()).toEqual([])
+  }))
+
+  it('世界书/预设：导出返回原生 JSON', withStore(async (store) => {
+    const raw = JSON.parse(readFileSync(`${fixturesDir}/Eldoria.json`, 'utf8'))
+    await store.importWorldFile('Eldoria', raw)
+    expect(JSON.parse(Buffer.from(await store.exportWorld('Eldoria')).toString('utf8')).entries).toBeTruthy()
+    const preset = JSON.parse(readFileSync(`${fixturesDir}/preset-Default.json`, 'utf8'))
+    await store.putPreset('Default', preset)
+    expect(JSON.parse(Buffer.from(await store.exportPreset('Default')).toString('utf8')).prompts).toHaveLength(preset.prompts.length)
   }))
 
   it('预设：存取原样透传', withStore(async (store) => {
