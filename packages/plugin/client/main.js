@@ -1,61 +1,7 @@
 window.__ModuleLoader__.load({
   id: 'dsh-tavern',
   factory: (require) => {
-    "use strict";
-    var DshBindClient = (() => {
-      var __defProp = Object.defineProperty;
-      var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-      var __getOwnPropNames = Object.getOwnPropertyNames;
-      var __hasOwnProp = Object.prototype.hasOwnProperty;
-      var __export = (target, all) => {
-        for (var name in all)
-          __defProp(target, name, { get: all[name], enumerable: true });
-      };
-      var __copyProps = (to, from, except, desc) => {
-        if (from && typeof from === "object" || typeof from === "function") {
-          for (let key of __getOwnPropNames(from))
-            if (!__hasOwnProp.call(to, key) && key !== except)
-              __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-        }
-        return to;
-      };
-      var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-
-      // packages/bind/src/client/host-probe.ts
-      var host_probe_exports = {};
-      __export(host_probe_exports, {
-        connectHostWorkspace: () => connectHostWorkspace,
-        createClientShapeTrace: () => createClientShapeTrace
-      });
-      function createClientShapeTrace() {
-        return { connectCalls: 0 };
-      }
-      function connectHostWorkspace(ctx, workspaceId, trace) {
-        const uiWorkspace = ctx.get?.("uiWorkspace");
-        if (typeof uiWorkspace?.connectWorkspace === "function") {
-          if (trace) {
-            trace.connectPath = "uiWorkspace";
-            trace.connectCalls += 1;
-          }
-          return uiWorkspace.connectWorkspace(workspaceId);
-        }
-        if (typeof ctx.workspaces?.connectWorkspace === "function") {
-          if (trace) {
-            trace.connectPath = "workspaces";
-            trace.connectCalls += 1;
-          }
-          return ctx.workspaces.connectWorkspace(workspaceId);
-        }
-        if (trace) {
-          trace.connectPath = "unavailable";
-          trace.connectCalls += 1;
-        }
-        throw new Error("no workspace connect face on this host (uiWorkspace/workspaces both unavailable)");
-      }
-      return __toCommonJS(host_probe_exports);
-    })();
-    const clientShapeTrace = DshBindClient.createClientShapeTrace()
-    window.__DSH_TAVERN_BIND__ = clientShapeTrace
+    // __DSH_BIND_CLIENT_SLOT__
     var module = { exports: {} }
     var exports = module.exports
     Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' })
