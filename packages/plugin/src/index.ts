@@ -2253,6 +2253,22 @@ function koboldRequestBody(prompt: string, sampler: Record<string, unknown> | un
   return body
 }
 
+const KOBOLD_MIN_CALL_INTERVAL_MS = 1000
+let koboldCallQueue = Promise.resolve()
+let koboldLastCallAt = 0
+
+// 限流：串行化对 Kobold 生成端点的请求，保证相邻请求之间至少间隔 KOBOLD_MIN_CALL_INTERVAL_MS，
+// 避免连续快速调用耗尽外部 API 配额或影响其他用户。
+function throttleKoboldCall() {
+  const run = koboldCallQueue.then(async () => {
+    const wait = koboldLastCallAt + KOBOLD_MIN_CALL_INTERVAL_MS - Date.now()
+    if (wait > 0) await new Promise((resolve) => setTimeout(resolve, wait))
+    koboldLastCallAt = Date.now()
+  })
+  koboldCallQueue = run.catch(() => {})
+  return run
+}
+
 async function* streamKobold(config, prompt, samplerPreset, signal) {
   const sampler = samplerPreset ?? {}
   const maxContext = numberOr(sampler['max_context_length'], 4096)
@@ -2264,6 +2280,7 @@ async function* streamKobold(config, prompt, samplerPreset, signal) {
   }
   if (config.streaming !== false) {
     try {
+      await throttleKoboldCall()
       const response = await fetch(new URL('api/extra/generate/stream', ensureTrailingSlash(config.endpoint)), {
         method: 'POST',
         headers,
@@ -2299,6 +2316,7 @@ async function* streamKobold(config, prompt, samplerPreset, signal) {
       // 网络错误继续尝试单发端点（可能是不同实现）
     }
   }
+  await throttleKoboldCall()
   const response = await fetch(new URL('api/v1/generate', ensureTrailingSlash(config.endpoint)), {
     method: 'POST',
     headers,
