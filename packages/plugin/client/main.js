@@ -1202,9 +1202,16 @@ window.__ModuleLoader__.load({
       })
     }
 
+    const lastGenerateRequestAt = new Map()
+    const GENERATE_MIN_INTERVAL_MS = 1000
+
     async function generateFor(sessionId, binding, mode, text, options = {}) {
       const currentRun = snapshot.runs[sessionId]
       if (!binding || currentRun?.busy) return
+      const now = Date.now()
+      const lastRequestAt = lastGenerateRequestAt.get(sessionId) || 0
+      if (now - lastRequestAt < GENERATE_MIN_INTERVAL_MS) return
+      lastGenerateRequestAt.set(sessionId, now)
       const key = chatKey(binding.character, binding.chatId)
       const currentChat = snapshot.chats[key] || await loadChat(binding.character, binding.chatId)
       const message = (text || '').trim()
